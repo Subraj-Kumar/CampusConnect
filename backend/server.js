@@ -14,6 +14,7 @@ connectDB();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use("/api/auth", require("./routes/authRoutes"));
 
 // Test Route
 app.get("/health", (req, res) => {
