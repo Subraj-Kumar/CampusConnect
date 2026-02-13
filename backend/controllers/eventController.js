@@ -34,16 +34,41 @@ exports.createEvent = async (req, res) => {
 // GET ALL APPROVED EVENTS (Students)
 exports.getApprovedEvents = async (req, res) => {
   try {
-    const events = await Event.find({ isApproved: true })
-      .populate("organizer", "name email organization")
-      .sort({ date: 1 });
+    const { search, category, sort } = req.query;
 
+    // Start with the base query: only show approved events
+    let query = { isApproved: true };
+
+    // 1. Search Logic: "i" makes it case-insensitive
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
+    }
+
+    // 2. Category Filter Logic
+    if (category && category !== "All") {
+      query.category = category;
+    }
+
+    // 3. Build the find query
+    let eventsQuery = Event.find(query).populate(
+      "organizer",
+      "name email organization"
+    );
+
+    // 4. Sorting Logic
+    if (sort === "asc") {
+      eventsQuery = eventsQuery.sort({ date: 1 });
+    } else if (sort === "desc") {
+      eventsQuery = eventsQuery.sort({ date: -1 });
+    }
+
+    // Execute the final query
+    const events = await eventsQuery;
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 // GET SINGLE EVENT
 exports.getEventById = async (req, res) => {
   try {
