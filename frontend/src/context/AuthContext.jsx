@@ -7,6 +7,7 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Initialize Auth State from LocalStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
@@ -17,6 +18,7 @@ const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // LOGIN
   const login = async (formData) => {
     const { data } = await API.post("/auth/login", formData);
 
@@ -26,6 +28,7 @@ const AuthProvider = ({ children }) => {
     setUser(data);
   };
 
+  // REGISTER
   const register = async (formData) => {
     const { data } = await API.post("/auth/register", formData);
 
@@ -35,6 +38,18 @@ const AuthProvider = ({ children }) => {
     setUser(data);
   };
 
+  // INSTANT PROFILE SYNC: The "Phase C" Fix
+  // This function updates the UI state without requiring a logout/login
+  const updateUser = (updatedData) => {
+    // Keep existing token and metadata while merging new profile data
+    const currentToken = localStorage.getItem("token");
+    const newUserData = { ...user, ...updatedData, token: currentToken };
+
+    localStorage.setItem("user", JSON.stringify(newUserData));
+    setUser(newUserData); // Triggers immediate UI re-render
+  };
+
+  // LOGOUT
   const logout = () => {
     localStorage.clear();
     setUser(null);
@@ -42,9 +57,9 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, loading }}
+      value={{ user, login, register, logout, updateUser, setUser, loading }}
     >
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
