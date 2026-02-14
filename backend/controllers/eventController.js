@@ -51,10 +51,57 @@ exports.createEvent = async (req, res) => {
   }
 };
 
+// @desc    Get all events created by the logged-in organizer with registration counts
+// @route   GET /api/events/my/events
 exports.getMyEvents = async (req, res) => {
   try {
+    // 1. Fetch all events belonging to the organizer
     const events = await Event.find({ organizer: req.user._id });
-    res.json(events);
+
+    // 2. Map through events and attach registration counts concurrently
+    const eventsWithCounts = await Promise.all(
+      events.map(async (event) => {
+        const count = await Registration.countDocuments({
+          event: event._id
+        });
+
+        // Use ._doc to access raw data and merge with our new virtual field
+        return {
+          ...event._doc,
+          registrationCount: count
+        };
+      })
+    );
+
+    res.json(eventsWithCounts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// GET ATTENDEES FOR AN EVENT (Organizer)
+// @desc    Get all attendees for a specific event (Organizer Only)
+// @route   GET /api/events/:id/attendees
+exports.getEventAttendees = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // AUTH CHECK: Ensure only the creator of the event can see the list
+    if (event.organizer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to view this attendee list" });
+    }
+
+    // Find all registrations for this event
+    const registrations = await Registration.find({
+      event: req.params.id
+    }).sort({ createdAt: -1 }); // Show newest registrations first
+
+    res.json(registrations);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

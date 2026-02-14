@@ -12,14 +12,13 @@ import EventDetails from "./pages/EventDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import EventAttendees from "./pages/EventAttendees"; // NEW: Added for Day 19
 import Profile from "./pages/Profile";
 
 function App() {
   return (
     <Router>
-      {/* By wrapping Routes in the Layout component, the Navbar 
-        and global styling are automatically applied to every page.
-      */}
+      {/* The Layout wrapper ensures Navbar and global styling appear on every page */}
       <Layout>
         <Routes>
           {/* --- 1. Public Discovery Routes --- */}
@@ -58,7 +57,17 @@ function App() {
             } 
           />
 
-          {/* --- 5. Admin Panel (Moderation & Security) --- */}
+          {/* --- 5. NEW: Attendee List (Organizer Only) --- */}
+          <Route 
+            path="/organizer/event/:id" 
+            element={
+              <ProtectedRoute role="organizer">
+                <EventAttendees />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* --- 6. Admin Panel (Moderation & Security) --- */}
           <Route 
             path="/admin" 
             element={
@@ -68,7 +77,7 @@ function App() {
             } 
           />
 
-          {/* --- 6. 404 Fallback --- */}
+          {/* --- 7. 404 Fallback --- */}
           <Route 
             path="*" 
             element={

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+// Import all controller functions
 const {
   createEvent,
   getApprovedEvents,
@@ -8,40 +9,68 @@ const {
   getMyEvents,
   registerForEvent,
   getMyRegistrations,
-  checkRegistrationStatus // Added for Day 17
+  checkRegistrationStatus, // Added Day 17
+  getEventAttendees        // Added Day 19
 } = require("../controllers/eventController");
 
+// Import middleware
 const { isAuthenticated } = require("../middleware/authMiddleware");
 const { isOrganizer } = require("../middleware/roleMiddleware");
 
-// --- 1. SPECIFIC AUTHENTICATED ROUTES (No :id or before :id) ---
+// --- 1. SPECIFIC AUTHENTICATED ROUTES (Always Before Generic :id) ---
 
-// Student: Check if already registered (DAY 17)
-// Must be above /:id to avoid collision
+/**
+ * @desc Check if a specific student is registered for an event
+ * @route GET /api/events/:id/registration-status
+ */
 router.get("/:id/registration-status", isAuthenticated, checkRegistrationStatus);
 
-// Student: View their own registrations
+/**
+ * @desc Get full attendee list for an event (Organizer Only)
+ * @route GET /api/events/:id/attendees
+ */
+router.get("/:id/attendees", isAuthenticated, isOrganizer, getEventAttendees);
+
+/**
+ * @desc View personal registrations (Student Only)
+ * @route GET /api/events/my/registrations
+ */
 router.get("/my/registrations", isAuthenticated, getMyRegistrations);
 
-// Organizer: View their own created events
+/**
+ * @desc View created events with analytics (Organizer Only)
+ * @route GET /api/events/my/events
+ */
 router.get("/my/events", isAuthenticated, isOrganizer, getMyEvents);
 
 
 // --- 2. PARAMETERIZED ROUTES (With :id) ---
 
-// Student: Register for a specific event
+/**
+ * @desc Student registers for an event
+ * @route POST /api/events/:id/register
+ */
 router.post("/:id/register", isAuthenticated, registerForEvent);
 
-// Public/Student: Get single event details
+/**
+ * @desc Get details of a single event
+ * @route GET /api/events/:id
+ */
 router.get("/:id", getEventById);
 
 
 // --- 3. GENERAL / BASE ROUTES ---
 
-// Organizer: Create a new event
+/**
+ * @desc Create a new event
+ * @route POST /api/events
+ */
 router.post("/", isAuthenticated, isOrganizer, createEvent);
 
-// Public/Student: List all approved events (with search/filter)
+/**
+ * @desc List all approved events (supports search/filter)
+ * @route GET /api/events
+ */
 router.get("/", getApprovedEvents);
 
 module.exports = router;
