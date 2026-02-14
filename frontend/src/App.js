@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Components
-import Navbar from "./components/Navbar";
+import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages
@@ -11,24 +11,24 @@ import Register from "./pages/Register";
 import EventDetails from "./pages/EventDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
-import StudentDashboard from "./pages/StudentDashboard"; // FIXED: Added this import
+import StudentDashboard from "./pages/StudentDashboard";
 import Profile from "./pages/Profile";
 
 function App() {
   return (
     <Router>
-      {/* Navbar is outside Routes so it shows on every page */}
-      <Navbar /> 
-      
-      <div className="container mx-auto">
+      {/* By wrapping Routes in the Layout component, the Navbar 
+        and global styling are automatically applied to every page.
+      */}
+      <Layout>
         <Routes>
-          {/* --- Public Routes --- */}
+          {/* --- 1. Public Discovery Routes --- */}
           <Route path="/" element={<Events />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/events/:id" element={<EventDetails />} />
 
-          {/* --- Secure Profile Route (Any logged-in user) --- */}
+          {/* --- 2. Shared Authenticated Routes --- */}
           <Route 
             path="/profile" 
             element={
@@ -38,7 +38,7 @@ function App() {
             } 
           />
 
-          {/* --- Student Specific Route (FIXED: Added this block) --- */}
+          {/* --- 3. Student Dashboard (Personalized Enrollment) --- */}
           <Route 
             path="/student" 
             element={
@@ -48,7 +48,7 @@ function App() {
             } 
           />
 
-          {/* --- Organizer Specific Routes --- */}
+          {/* --- 4. Organizer Workflow (Event Creation & Management) --- */}
           <Route 
             path="/organizer" 
             element={
@@ -58,7 +58,7 @@ function App() {
             } 
           />
 
-          {/* --- Admin Specific Routes --- */}
+          {/* --- 5. Admin Panel (Moderation & Security) --- */}
           <Route 
             path="/admin" 
             element={
@@ -68,10 +68,18 @@ function App() {
             } 
           />
 
-          {/* --- 404 Catch-all --- */}
-          <Route path="*" element={<div className="p-10 text-center text-2xl font-bold">404 - Page Not Found</div>} />
+          {/* --- 6. 404 Fallback --- */}
+          <Route 
+            path="*" 
+            element={
+              <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                <h1 className="text-6xl font-black text-gray-200">404</h1>
+                <p className="text-xl font-bold text-gray-500 mt-4">Page Not Found</p>
+              </div>
+            } 
+          />
         </Routes>
-      </div>
+      </Layout>
     </Router>
   );
 }
