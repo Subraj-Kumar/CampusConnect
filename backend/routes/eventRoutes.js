@@ -7,24 +7,27 @@ const {
   getEventById,
   getMyEvents,
   registerForEvent,
-  getMyRegistrations
+  getMyRegistrations,
+  checkRegistrationStatus // Added for Day 17
 } = require("../controllers/eventController");
 
 const { isAuthenticated } = require("../middleware/authMiddleware");
 const { isOrganizer } = require("../middleware/roleMiddleware");
 
-// --- 1. SPECIFIC AUTHENTICATED ROUTES (No :id) ---
-// These must come first so "my" isn't treated as an :id
+// --- 1. SPECIFIC AUTHENTICATED ROUTES (No :id or before :id) ---
+
+// Student: Check if already registered (DAY 17)
+// Must be above /:id to avoid collision
+router.get("/:id/registration-status", isAuthenticated, checkRegistrationStatus);
 
 // Student: View their own registrations
-router.get("/my/registrations", isAuthenticated, getMyRegistrations); // Fixed typo: registraions -> registrations
+router.get("/my/registrations", isAuthenticated, getMyRegistrations);
 
 // Organizer: View their own created events
 router.get("/my/events", isAuthenticated, isOrganizer, getMyEvents);
 
 
 // --- 2. PARAMETERIZED ROUTES (With :id) ---
-// These catch any string after the slash, so they must be below specific routes
 
 // Student: Register for a specific event
 router.post("/:id/register", isAuthenticated, registerForEvent);
@@ -34,7 +37,6 @@ router.get("/:id", getEventById);
 
 
 // --- 3. GENERAL / BASE ROUTES ---
-// These handle the root path of the resource
 
 // Organizer: Create a new event
 router.post("/", isAuthenticated, isOrganizer, createEvent);
