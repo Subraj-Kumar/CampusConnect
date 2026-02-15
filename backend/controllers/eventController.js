@@ -1,6 +1,7 @@
 const Event = require("../models/Event");
 const Registration = require("../models/Registration");
 const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail"); // Added for Day 20
 
 // ==========================================
 // Check Registration Status
@@ -55,17 +56,15 @@ exports.createEvent = async (req, res) => {
 // @route   GET /api/events/my/events
 exports.getMyEvents = async (req, res) => {
   try {
-    // 1. Fetch all events belonging to the organizer
     const events = await Event.find({ organizer: req.user._id });
 
-    // 2. Map through events and attach registration counts concurrently
+    // Map through events and attach registration counts concurrently
     const eventsWithCounts = await Promise.all(
       events.map(async (event) => {
         const count = await Registration.countDocuments({
           event: event._id
         });
 
-        // Use ._doc to access raw data and merge with our new virtual field
         return {
           ...event._doc,
           registrationCount: count
@@ -79,7 +78,6 @@ exports.getMyEvents = async (req, res) => {
   }
 };
 
-// GET ATTENDEES FOR AN EVENT (Organizer)
 // @desc    Get all attendees for a specific event (Organizer Only)
 // @route   GET /api/events/:id/attendees
 exports.getEventAttendees = async (req, res) => {
@@ -90,15 +88,13 @@ exports.getEventAttendees = async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    // AUTH CHECK: Ensure only the creator of the event can see the list
     if (event.organizer.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to view this attendee list" });
     }
 
-    // Find all registrations for this event
     const registrations = await Registration.find({
       event: req.params.id
-    }).sort({ createdAt: -1 }); // Show newest registrations first
+    }).sort({ createdAt: -1 });
 
     res.json(registrations);
 
@@ -111,6 +107,7 @@ exports.getEventAttendees = async (req, res) => {
 // 2. STUDENT & PUBLIC ACTIONS
 // ==========================================
 
+// @desc    Get all approved events
 exports.getApprovedEvents = async (req, res) => {
   try {
     const { search, category, sort } = req.query;
@@ -136,6 +133,7 @@ exports.getApprovedEvents = async (req, res) => {
   }
 };
 
+// @desc    Get single event by ID
 exports.getEventById = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate("organizer", "name email organization");
@@ -152,6 +150,7 @@ exports.getEventById = async (req, res) => {
   }
 };
 
+// @desc    Register for event and trigger email confirmation
 exports.registerForEvent = async (req, res) => {
   try {
     if (req.user.role !== "student") {
@@ -171,6 +170,7 @@ exports.registerForEvent = async (req, res) => {
       });
     }
 
+    // 1. Create the database registration entry
     const registration = await Registration.create({
       event: event._id,
       student: studentProfile._id,
@@ -181,6 +181,27 @@ exports.registerForEvent = async (req, res) => {
         branch: studentProfile.branch
       }
     });
+
+    // 2. Trigger Email Notification
+    // Wrapped in a separate try/catch so email failure doesn't cancel the DB success
+    try {
+      await sendEmail(
+        req.user.email,
+        "Registration Confirmed! 🚀",
+        `Hi ${req.user.name},
+
+You have successfully registered for "${event.title}".
+
+Event Details:
+📅 Date: ${new Date(event.date).toLocaleDateString()}
+📍 Venue: ${event.venue}
+
+Thank you for using CampusConnect!`
+      );
+    } catch (err) {
+      console.error("Email Service Error:", err.message);
+      // We still return 201 because the database record was successful
+    }
 
     res.status(201).json({ message: "Successfully registered!", registration });
   } catch (error) {
