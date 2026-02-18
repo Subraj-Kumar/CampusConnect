@@ -9,71 +9,79 @@ const {
   getMyEvents,
   registerForEvent,
   getMyRegistrations,
-  checkRegistrationStatus, // Added Day 17
-  getEventAttendees        // Added Day 19
+  checkRegistrationStatus,
+  getEventAttendees,
+  getUpcomingSliderEvents // Day 22 Slider Logic
 } = require("../controllers/eventController");
 
 // Import middleware
 const { isAuthenticated } = require("../middleware/authMiddleware");
 const { isOrganizer } = require("../middleware/roleMiddleware");
-const upload = require("../middleware/uploadMiddleware"); // Added Day 21
+const upload = require("../middleware/uploadMiddleware");
 
-// --- 1. SPECIFIC AUTHENTICATED ROUTES (Always Before Generic :id) ---
+// --- 1. NEW: PRODUCT HOME ROUTES (Must be before :id routes) ---
 
-/**
+/*
+ * @desc Get events happening within next 7 days for Hero Slider
+ * @route GET /api/events/upcoming/slider
+*/
+router.get("/upcoming/slider", getUpcomingSliderEvents);
+
+// --- 2. SPECIFIC AUTHENTICATED ROUTES ---
+
+/*
  * @desc Check if a specific student is registered for an event
  * @route GET /api/events/:id/registration-status
  */
 router.get("/:id/registration-status", isAuthenticated, checkRegistrationStatus);
 
-/**
+/*
  * @desc Get full attendee list for an event (Organizer Only)
  * @route GET /api/events/:id/attendees
  */
 router.get("/:id/attendees", isAuthenticated, isOrganizer, getEventAttendees);
 
-/**
+/*
  * @desc View personal registrations (Student Only)
  */
 router.get("/my/registrations", isAuthenticated, getMyRegistrations);
 
-/**
+/*
  * @desc View created events with analytics (Organizer Only)
  */
 router.get("/my/events", isAuthenticated, isOrganizer, getMyEvents);
 
 
-// --- 2. PARAMETERIZED ROUTES (With :id) ---
+// --- 3. PARAMETERIZED ROUTES (With :id) ---
 
-/**
+/*
  * @desc Student registers for an event
  * @route POST /api/events/:id/register
  */
 router.post("/:id/register", isAuthenticated, registerForEvent);
 
-/**
+/*
  * @desc Get details of a single event
  * @route GET /api/events/:id
  */
 router.get("/:id", getEventById);
 
 
-// --- 3. GENERAL / BASE ROUTES ---
+// --- 4. GENERAL / BASE ROUTES ---
 
-/**
+/*
  * @desc Create a new event with poster upload
  * @route POST /api/events
- * Logic: 'upload.single("poster")' looks for a file field named "poster" in the request
  */
 router.post(
   "/",
   isAuthenticated,
   isOrganizer,
-  upload.single("poster"), // Added for Day 21
+  upload.single("poster"),
   createEvent
 );
 
-/**
+/*
  * @desc List all approved events (supports search/filter)
  */
 router.get("/", getApprovedEvents);

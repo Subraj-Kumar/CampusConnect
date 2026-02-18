@@ -9,6 +9,27 @@ const cloudinary = require("../config/cloudinary"); // For cloudinary multer
 // Check Registration Status
 // ==========================================
 
+// @desc    Get events happening within the next 7 days for the Hero Slider
+// @route   GET /api/events/upcoming/slider
+exports.getUpcomingSliderEvents = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    nextWeek.setHours(23,59,59,999) // 7-day window
+
+    const events = await Event.find({
+      isApproved: true,
+      date: { $gte: today, $lte: nextWeek }
+    }).sort({ date: 1 }); // Soonest events first
+
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Check if a student is already registered for an event
 // @route   GET /api/events/:id/registration-status
 exports.checkRegistrationStatus = async (req, res) => {

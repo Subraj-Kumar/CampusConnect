@@ -1,61 +1,92 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import API from "../api/axios";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import UpcomingSlider from "../components/UpcomingSlider"; 
 
 const Events = () => {
   const { user } = useContext(AuthContext);
 
-  const [events, setEvents] = useState([]);
+  // Data States
+  const [sliderEvents, setSliderEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  
+  // Filter States
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("asc");
-  const [loadingId, setLoadingId] = useState(null);
   
-  // Day 17: State to track which events the student has already joined
+  // Logic States
+  const [loadingId, setLoadingId] = useState(null);
   const [registeredMap, setRegisteredMap] = useState({});
 
-  const fetchEvents = async () => {
+  /**
+   * 📡 ROBUST DATA FETCHING (Memoized)
+   * We use 'useCallback' to fix the React warning and prevent infinite loops.
+   * We separate try/catch blocks so one failure doesn't break the whole page.
+   */
+  const fetchData = useCallback(async () => {
+    let sliderData = [];
+
+    // 1. Try to fetch Slider Events (Fail gracefully)
     try {
-      const { data } = await API.get(
+      const res = await API.get("/events/upcoming/slider");
+      sliderData = res.data || [];
+      setSliderEvents(sliderData);
+    } catch (error) {
+      console.warn("Slider endpoint issue:", error.message);
+      // We continue executing even if this fails
+    }
+
+    // 2. Fetch Main Event List
+    try {
+      const { data: mainData } = await API.get(
         `/events?search=${search}&category=${category}&sort=${sort}`
       );
-      setEvents(data);
 
-      // Day 17: If a student is logged in, check registration status for all fetched events
+      // Filter: Don't show events in the list if they are already in the slider
+      const sliderIds = new Set(sliderData.map(e => String(e._id)));
+      const filteredMain = mainData.filter(e => !sliderIds.has(String(e._id)));
+      
+      setUpcomingEvents(filteredMain);
+
+      // 3. Check Registration Status (if student)
       if (user?.role === "student") {
-        const statuses = await Promise.all(
-          data.map(async (event) => {
-            try {
-              const res = await API.get(`/events/${event._id}/registration-status`);
-              return { id: event._id, isRegistered: res.data.registered };
-            } catch (err) {
-              return { id: event._id, isRegistered: false };
-            }
-          })
-        );
-
-        const statusMap = {};
-        statuses.forEach((item) => (statusMap[item.id] = item.isRegistered));
-        setRegisteredMap(statusMap);
+        // We check status for ALL loaded events (slider + list)
+        const allEvents = [...sliderData, ...filteredMain];
+        
+        if (allEvents.length > 0) {
+          const statuses = await Promise.all(
+            allEvents.map(async (event) => {
+              try {
+                const res = await API.get(`/events/${event._id}/registration-status`);
+                return { id: event._id, isRegistered: res.data.registered };
+              } catch (err) {
+                return { id: event._id, isRegistered: false };
+              }
+            })
+          );
+          
+          const statusMap = {};
+          statuses.forEach((item) => (statusMap[item.id] = item.isRegistered));
+          setRegisteredMap(statusMap);
+        }
       }
     } catch (error) {
-      console.error("Error fetching events", error);
+      console.error("Main event list failed:", error);
     }
-  };
+  }, [search, category, sort, user]); // Only recreate this function if these change
 
+  // Trigger fetch when filters change
   useEffect(() => {
-    fetchEvents();
-  }, [search, category, sort, user]); // Refetch if user logs in/out
+    fetchData();
+  }, [fetchData]);
 
   const registerHandler = async (eventId) => {
     try {
       setLoadingId(eventId);
       await API.post(`/events/${eventId}/register`);
-      
-      // Day 17: Instant UI Update - mark as registered in local state
       setRegisteredMap((prev) => ({ ...prev, [eventId]: true }));
-      
       alert("Registered successfully!");
     } catch (error) {
       alert(error.response?.data?.message || "Registration failed");
@@ -65,139 +96,312 @@ const Events = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight">Upcoming Events</h1>
-      </div>
+    <div className="events-page-container">
+      {/* 🎨 Built-in Styles for Instant Professional Look */}
+      <style>{`
+        .events-page-container {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 2rem;
+          font-family: 'Inter', sans-serif;
+          background-color: #f9fafb;
+          min-height: 100vh;
+        }
+        /* Controls Section */
+        .controls-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+        .page-title {
+          font-size: 2.25rem;
+          font-weight: 800;
+          color: #111827;
+          margin: 0;
+        }
+        .filters-wrapper {
+          display: flex;
+          gap: 1rem;
+          background: white;
+          padding: 0.75rem;
+          border-radius: 1rem;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+          border: 1px solid #e5e7eb;
+          flex-wrap: wrap;
+        }
+        .search-input {
+          padding: 0.75rem 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          min-width: 250px;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .search-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .filter-select {
+          padding: 0.75rem 2rem 0.75rem 1rem;
+          border: 1px solid #e5e7eb;
+          border-radius: 0.75rem;
+          background-color: #f9fafb;
+          cursor: pointer;
+        }
 
-      {/* SEARCH & FILTERS */}
-      <div className="flex flex-wrap gap-4 mb-10 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <input
-          type="text"
-          placeholder="Search by title..."
-          className="border-gray-200 border p-3 rounded-xl w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none transition"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        /* Grid Layout */
+        .events-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 2rem;
+        }
 
-        <select
-          className="border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="All">All Categories</option>
-          <option value="Workshop">Workshop</option>
-          <option value="Talk">Talk</option>
-          <option value="Hackathon">Hackathon</option>
-          <option value="Seminar">Seminar</option>
-          <option value="Other">Other</option>
-        </select>
+        /* Card Styles */
+        .event-card {
+          background: white;
+          border: 1px solid #f3f4f6;
+          border-radius: 1.5rem;
+          padding: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .event-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Card Image */
+        .card-image-wrapper {
+          position: relative;
+          height: 12rem;
+          border-radius: 1rem;
+          overflow: hidden;
+          margin-bottom: 1rem;
+          background: #f3f4f6;
+        }
+        .card-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        .category-badge {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          background: rgba(255, 255, 255, 0.95);
+          color: #2563eb;
+          font-size: 0.7rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
 
-        <select
-          className="border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
-          <option value="asc">📅 Date: Soonest First</option>
-          <option value="desc">📅 Date: Furthest First</option>
-        </select>
-      </div>
+        /* Card Content */
+        .card-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #1f2937;
+          margin: 0 0 0.5rem 0;
+          line-height: 1.2;
+        }
+        .card-desc {
+          color: #6b7280;
+          font-size: 0.875rem;
+          margin-bottom: 1.5rem;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .meta-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #9ca3af;
+          margin-bottom: 0.25rem;
+        }
+        
+        /* Buttons */
+        .btn-group {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+        }
+        .btn {
+          flex: 1;
+          padding: 0.75rem;
+          border-radius: 0.75rem;
+          font-weight: 700;
+          font-size: 0.875rem;
+          cursor: pointer;
+          border: none;
+          transition: all 0.2s;
+          text-align: center;
+        }
+        .btn-details {
+          background: #f3f4f6;
+          color: #374151;
+        }
+        .btn-details:hover { background: #e5e7eb; }
+        
+        .btn-register {
+          background: #2563eb;
+          color: white;
+          box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+        .btn-register:hover { background: #1d4ed8; }
+        
+        .btn-joined {
+          background: #ecfdf5;
+          color: #059669;
+          border: 1px solid #d1fae5;
+          cursor: default;
+        }
 
-      {/* EVENT GRID */}
-      {events.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-gray-400 text-lg italic">No events found matching your criteria.</p>
+        /* Empty State */
+        .empty-state {
+          grid-column: 1 / -1;
+          text-align: center;
+          padding: 4rem;
+          background: white;
+          border-radius: 1.5rem;
+          border: 2px dashed #e5e7eb;
+          color: #9ca3af;
+          font-weight: 600;
+        }
+      `}</style>
+
+      {/* 🎞 HERO SLIDER */}
+      {sliderEvents.length > 0 && (
+        <div style={{ marginBottom: '3rem' }}>
+          <UpcomingSlider events={sliderEvents} />
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {events.map((event) => (
-            <div
-              key={event._id}
-              className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
-            >
-              {/* Day 21: POSTER DISPLAY (Step 9) */}
-              {event.poster ? (
-                <img
-                  src={event.poster}
-                  alt={`${event.title} Poster`}
-                  className="w-full h-48 object-cover rounded-2xl mb-4"
-                />
-              ) : (
-                /* Fallback if no poster is available */
-                <div className="w-full h-48 bg-gray-50 rounded-2xl mb-4 flex items-center justify-center border border-gray-100">
-                   <span className="text-gray-300 text-sm font-bold uppercase tracking-tighter">No Preview Available</span>
-                </div>
-              )}
+      )}
 
-              <div className="flex justify-between items-start mb-4">
-                <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full">
-                  {event.category}
-                </span>
-                {/* Visual indicator of registration status */}
+      {/* 🛠 CONTROLS HEADER */}
+      <div className="controls-header">
+        <div>
+          <h1 className="page-title">Explore Events</h1>
+          <p style={{ color: '#9ca3af', fontSize: '0.875rem', fontWeight: 600, marginTop: '0.25rem' }}>
+            Discover upcoming activities on campus
+          </p>
+        </div>
+
+        <div className="filters-wrapper">
+          <input
+            type="text"
+            placeholder="Search by title..."
+            className="search-input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <select
+            className="filter-select"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="All">All Categories</option>
+            <option value="Workshop">Workshop</option>
+            <option value="Talk">Talk</option>
+            <option value="Hackathon">Hackathon</option>
+            <option value="Seminar">Seminar</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <select
+            className="filter-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="asc">📅 Soonest First</option>
+            <option value="desc">📅 Furthest First</option>
+          </select>
+        </div>
+      </div>
+
+      {/* 📋 EVENT GRID */}
+      <div className="events-grid">
+        {upcomingEvents.length === 0 ? (
+          <div className="empty-state">
+            <p>No upcoming events match your criteria.</p>
+          </div>
+        ) : (
+          upcomingEvents.map((event) => (
+            <div key={event._id} className="event-card">
+              <div>
+                {/* Poster / Fallback */}
+                <div className="card-image-wrapper">
+                  {event.poster ? (
+                    <img src={event.poster} alt={event.title} className="card-img" />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.1em' }}>
+                      No Preview
+                    </div>
+                  )}
+                  <span className="category-badge">{event.category}</span>
+                </div>
+
+                {/* Status Indicator */}
                 {user?.role === "student" && registeredMap[event._id] && (
-                  <span className="text-green-500 font-bold text-xs flex items-center gap-1">
-                    ✓ Joined
-                  </span>
+                  <div style={{ color: '#059669', fontSize: '0.75rem', fontWeight: '800', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    ✓ Registered
+                  </div>
                 )}
-              </div>
 
-              <h3 className="text-2xl font-bold text-gray-800 leading-tight mb-2">{event.title}</h3>
+                <h3 className="card-title">{event.title}</h3>
+                <p className="card-desc">{event.description}</p>
 
-              <p className="text-gray-500 text-sm line-clamp-2 mb-6 h-10">
-                {event.description}
-              </p>
-
-              <div className="space-y-2 mb-6">
-                <div className="flex items-center text-gray-400 text-xs font-medium">
-                  <span className="mr-2">📅</span> {new Date(event.date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
+                <div className="meta-row">
+                  <span>📅</span> {new Date(event.date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
-                <div className="flex items-center text-gray-400 text-xs font-medium">
-                  <span className="mr-2">📍</span> {event.venue}
+                <div className="meta-row">
+                  <span>📍</span> {event.venue}
                 </div>
               </div>
 
-              {/* ACTION BUTTONS */}
-              <div className="space-y-3">
-                <Link to={`/events/${event._id}`} className="block">
-                  <button className="w-full bg-gray-50 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-100 transition">
-                    View Details
+              {/* Action Buttons */}
+              <div className="btn-group">
+                <Link to={`/events/${event._id}`} style={{ flex: 1, textDecoration: 'none' }}>
+                  <button className="btn btn-details" style={{ width: '100%' }}>
+                    Details
                   </button>
                 </Link>
 
-                {/* Conditional Register/Registered Logic */}
-                {!user ? (
-                  <Link to="/login" className="block">
-                    <button className="w-full bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-black transition shadow-lg">
-                      Login to Register
-                    </button>
-                  </Link>
-                ) : user.role === "student" ? (
-                  registeredMap[event._id] ? (
-                    <button
-                      disabled
-                      className="w-full bg-blue-50 text-blue-600 font-bold py-3 rounded-xl border border-blue-100 cursor-default"
-                    >
-                      Registered ✅
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => registerHandler(event._id)}
-                      disabled={loadingId === event._id}
-                      className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition shadow-lg disabled:opacity-50 active:scale-95"
-                    >
-                      {loadingId === event._id ? "Processing..." : "Register Now"}
-                    </button>
-                  )
-                ) : (
-                  <div className="text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest pt-2">
-                    {user.role} Control Mode
+                {user?.role === "student" && (
+                  <div style={{ flex: 1 }}>
+                    {registeredMap[event._id] ? (
+                      <button className="btn btn-joined" style={{ width: '100%' }} disabled>
+                        Joined
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => registerHandler(event._id)}
+                        disabled={loadingId === event._id}
+                        className="btn btn-register"
+                        style={{ width: '100%', opacity: loadingId === event._id ? 0.7 : 1 }}
+                      >
+                        {loadingId === event._id ? "..." : "Join"}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };

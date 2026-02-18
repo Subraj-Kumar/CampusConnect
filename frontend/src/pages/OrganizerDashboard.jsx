@@ -110,6 +110,11 @@ const OrganizerDashboard = () => {
                 <option value="Talk">Talk</option>
                 <option value="Hackathon">Hackathon</option>
                 <option value="Seminar">Seminar</option>
+                <option value="Sports">Sports</option>
+                <option value="Technical">Technical</option>
+                <option value="Recreational">Recreational</option>
+                <option value="Cultural">Cultural</option>
+                <option value="Event">Event</option>
                 <option value="Other">Other</option>
               </select>
             </div>
