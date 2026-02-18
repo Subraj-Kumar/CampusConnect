@@ -28,6 +28,11 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    // Added Day 21: URL of the event poster image stored in Cloudinary
+    poster: {
+      type: String,
+      default: "" 
+    },
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

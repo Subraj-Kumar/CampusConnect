@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Hook for navigation
+import { useNavigate } from "react-router-dom"; 
 import API from "../api/axios";
 
 const OrganizerDashboard = () => {
-  const navigate = useNavigate(); // Initialize navigation
+  const navigate = useNavigate(); 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Day 21: Added state for the image file
+  const [poster, setPoster] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -16,7 +20,6 @@ const OrganizerDashboard = () => {
     registrationDeadline: ""
   });
 
-  // Fetch organizer-specific events with registration counts
   const fetchMyEvents = async () => {
     try {
       const { data } = await API.get("/events/my/events");
@@ -32,13 +35,32 @@ const OrganizerDashboard = () => {
     fetchMyEvents();
   }, []);
 
+  // Day 21: Updated handler to use FormData
   const submitHandler = async (e) => {
     e.preventDefault();
+    
+    // Create FormData object to handle both text and binary file
+    const data = new FormData();
+    
+    // Append all text fields from the formData state
+    Object.keys(formData).forEach((key) => {
+      data.append(key, formData[key]);
+    });
+
+    // Append the poster image if it exists
+    if (poster) {
+      data.append("poster", poster);
+    }
+
     try {
-      await API.post("/events", formData);
-      alert("Event created successfully and sent for admin approval!");
+      // Must set headers to 'multipart/form-data' for file upload
+      await API.post("/events", data, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+
+      alert("Event created successfully with poster!");
       
-      // Reset form fields after successful creation
+      // Reset everything
       setFormData({
         title: "",
         description: "",
@@ -48,6 +70,7 @@ const OrganizerDashboard = () => {
         venue: "",
         registrationDeadline: ""
       });
+      setPoster(null); // Clear the file input state
       fetchMyEvents();
     } catch (error) {
       alert(error.response?.data?.message || "Failed to create event");
@@ -113,6 +136,18 @@ const OrganizerDashboard = () => {
               />
             </div>
 
+            {/* Day 21: Added Poster Image Upload Input */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-bold text-gray-700 ml-1">Event Poster (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                className="w-full p-3 bg-gray-50 border-dashed border-2 border-gray-200 rounded-xl outline-none transition cursor-pointer"
+                onChange={(e) => setPoster(e.target.files[0])}
+              />
+              <p className="text-[10px] text-gray-400 ml-1 italic">JPG, PNG or GIF. Max 2MB recommended.</p>
+            </div>
+
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Venue</label>
               <input
@@ -174,6 +209,15 @@ const OrganizerDashboard = () => {
                     <div className="text-[10px] font-bold text-gray-300 uppercase">{event.category}</div>
                   </div>
 
+                  {/* Day 21: Added small preview in dashboard if poster exists */}
+                  {event.poster && (
+                    <img 
+                      src={event.poster} 
+                      alt="Event" 
+                      className="w-full h-32 object-cover rounded-xl mb-4 border border-gray-100" 
+                    />
+                  )}
+
                   <h4 className="text-2xl font-bold text-gray-800 leading-tight mb-4">{event.title}</h4>
                   
                   <div className="space-y-2 mb-8 text-sm text-gray-400">
@@ -182,7 +226,6 @@ const OrganizerDashboard = () => {
                   </div>
                 </div>
 
-                {/* ANALYTICS SECTION */}
                 <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl font-black text-blue-600">
@@ -193,7 +236,6 @@ const OrganizerDashboard = () => {
                     </p>
                   </div>
                   
-                  {/* Functional Attendee List Button */}
                   <button 
                     onClick={() => navigate(`/organizer/event/${event._id}`)}
                     className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-100"

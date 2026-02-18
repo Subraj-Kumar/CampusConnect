@@ -113,8 +113,22 @@ const Events = () => {
           {events.map((event) => (
             <div
               key={event._id}
-              className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden"
             >
+              {/* Day 21: POSTER DISPLAY (Step 9) */}
+              {event.poster ? (
+                <img
+                  src={event.poster}
+                  alt={`${event.title} Poster`}
+                  className="w-full h-48 object-cover rounded-2xl mb-4"
+                />
+              ) : (
+                /* Fallback if no poster is available */
+                <div className="w-full h-48 bg-gray-50 rounded-2xl mb-4 flex items-center justify-center border border-gray-100">
+                   <span className="text-gray-300 text-sm font-bold uppercase tracking-tighter">No Preview Available</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-start mb-4">
                 <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full">
                   {event.category}

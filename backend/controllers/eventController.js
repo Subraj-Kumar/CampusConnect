@@ -2,6 +2,8 @@ const Event = require("../models/Event");
 const Registration = require("../models/Registration");
 const User = require("../models/User");
 const sendEmail = require("../utils/sendEmail"); // Added for Day 20
+const cloudinary = require("../config/cloudinary"); // For cloudinary multer
+
 
 // ==========================================
 // Check Registration Status
@@ -27,12 +29,38 @@ exports.checkRegistrationStatus = async (req, res) => {
 // 1. ORGANIZER ACTIONS
 // ==========================================
 
-// @desc    Create a new event (Pending Admin Approval)
+// @desc    Create a new event (Pending Admin Approval) with optional poster upload
 exports.createEvent = async (req, res) => {
   try {
     const {
-      title, description, category, date, time, venue, registrationDeadline
+      title,
+      description,
+      category,
+      date,
+      time,
+      venue,
+      registrationDeadline
     } = req.body;
+
+    let posterUrl = "";
+
+    // If poster file exists, upload to Cloudinary
+    if (req.file) {
+      const uploadFromBuffer = () =>
+        new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "campusconnect_events" },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+      const result = await uploadFromBuffer();
+      posterUrl = result.secure_url;
+    }
 
     const event = await Event.create({
       title,
@@ -43,14 +71,18 @@ exports.createEvent = async (req, res) => {
       venue,
       registrationDeadline,
       organizer: req.user._id,
-      organizationName: req.user.organization
+      organizationName: req.user.organization,
+      poster: posterUrl
     });
 
     res.status(201).json(event);
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Create Event Error:", error.message);
+    res.status(500).json({ message: "Failed to create event" });
   }
 };
+
 
 // @desc    Get all events created by the logged-in organizer with registration counts
 // @route   GET /api/events/my/events
