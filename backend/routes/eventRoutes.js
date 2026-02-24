@@ -11,7 +11,8 @@ const {
   getMyRegistrations,
   checkRegistrationStatus,
   getEventAttendees,
-  getUpcomingSliderEvents // Day 22 Slider Logic
+  getUpcomingSliderEvents,
+  getCalendarEvents
 } = require("../controllers/eventController");
 
 // Import middleware
@@ -26,6 +27,7 @@ const upload = require("../middleware/uploadMiddleware");
  * @route GET /api/events/upcoming/slider
 */
 router.get("/upcoming/slider", getUpcomingSliderEvents);
+router.get("/calendar/month", getCalendarEvents);
 
 // --- 2. SPECIFIC AUTHENTICATED ROUTES ---
 

@@ -30,6 +30,31 @@ exports.getUpcomingSliderEvents = async (req, res) => {
   }
 };
 
+// @desc    Get events for a specific month for the calendar widget
+// @route   GET /api/events/calendar/month
+exports.getCalendarEvents = async (req, res) => {
+  try {
+    const { year, month } = req.query;
+
+    if (!year || !month) {
+      return res.status(400).json({ message: "Year and month are required" });
+    }
+
+    // Define the boundaries of the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    const events = await Event.find({
+      isApproved: true,
+      date: { $gte: startDate, $lte: endDate }
+    }).select("title date organizationName"); // Optimize: select only necessary fields
+
+    res.json(events);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Check if a student is already registered for an event
 // @route   GET /api/events/:id/registration-status
 exports.checkRegistrationStatus = async (req, res) => {
