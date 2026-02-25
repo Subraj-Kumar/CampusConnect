@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import "./index.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "react-calendar/dist/Calendar.css";
@@ -15,8 +16,9 @@ import EventDetails from "./pages/EventDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
-import EventAttendees from "./pages/EventAttendees"; // NEW: Added for Day 19
+import EventAttendees from "./pages/EventAttendees";
 import Profile from "./pages/Profile";
+import OAuthSuccess from "./pages/OAuthSuccess";
 
 function App() {
   return (
@@ -29,6 +31,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/events/:id" element={<EventDetails />} />
+          
+          {/* 🌐 MISSING ROUTE ADDED HERE: Catch Google's redirect */}
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           {/* --- 2. Shared Authenticated Routes --- */}
           <Route 
@@ -60,7 +65,7 @@ function App() {
             } 
           />
 
-          {/* --- 5. NEW: Attendee List (Organizer Only) --- */}
+          {/* --- 5. Attendee List (Organizer Only) --- */}
           <Route 
             path="/organizer/event/:id" 
             element={

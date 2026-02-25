@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom"; // Added Link
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -32,6 +32,7 @@ const Login = () => {
       <div className="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl border border-gray-100">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">Login to CampusConnect</h2>
         
+        {/* 📧 STANDARD EMAIL LOGIN */}
         <form onSubmit={submitHandler} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -64,6 +65,30 @@ const Login = () => {
             Sign In
           </button>
         </form>
+
+        {/* 🌐 GOOGLE OAUTH SECTION */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <a
+            href="http://localhost:5000/api/auth/google"
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition shadow-sm mt-6 active:scale-95"
+          >
+            <img 
+              src="https://www.svgrepo.com/show/475656/google-color.svg" 
+              alt="Google logo" 
+              className="w-5 h-5" 
+            />
+            Google
+          </a>
+        </div>
 
         {/* THE ESCAPE HATCH FOR NEW USERS */}
         <div className="mt-8 pt-6 border-t text-center">

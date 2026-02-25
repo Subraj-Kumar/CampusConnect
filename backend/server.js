@@ -6,6 +6,9 @@ dotenv.config();
 
 const cors = require("cors");
 const connectDB = require("./config/db");
+const session = require("express-session"); // Added for Google OAuth
+const passport = require("passport");       // Added for Google OAuth
+require("./config/passport");               // Load the Google Strategy configuration
 
 // Import Routes
 const authRoutes = require("./routes/authRoutes");
@@ -21,6 +24,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 🟢 PASSPORT & SESSION MIDDLEWARE (MUST be placed before API routes)
+app.use(session({
+  secret: process.env.JWT_SECRET || "googleauthsecret",
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // --- 📡 API Routes ---
 app.use("/api/auth", authRoutes);

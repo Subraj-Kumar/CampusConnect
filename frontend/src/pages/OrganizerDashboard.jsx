@@ -6,18 +6,10 @@ const OrganizerDashboard = () => {
   const navigate = useNavigate(); 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Day 21: Added state for the image file
   const [poster, setPoster] = useState(null);
 
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "Workshop",
-    date: "",
-    time: "",
-    venue: "",
-    registrationDeadline: ""
+    title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: ""
   });
 
   const fetchMyEvents = async () => {
@@ -35,42 +27,23 @@ const OrganizerDashboard = () => {
     fetchMyEvents();
   }, []);
 
-  // Day 21: Updated handler to use FormData
   const submitHandler = async (e) => {
     e.preventDefault();
-    
-    // Create FormData object to handle both text and binary file
     const data = new FormData();
-    
-    // Append all text fields from the formData state
     Object.keys(formData).forEach((key) => {
       data.append(key, formData[key]);
     });
-
-    // Append the poster image if it exists
-    if (poster) {
-      data.append("poster", poster);
-    }
+    if (poster) data.append("poster", poster);
 
     try {
-      // Must set headers to 'multipart/form-data' for file upload
       await API.post("/events", data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
-
-      alert("Event created successfully with poster!");
-      
-      // Reset everything
+      alert("Event created successfully!");
       setFormData({
-        title: "",
-        description: "",
-        category: "Workshop",
-        date: "",
-        time: "",
-        venue: "",
-        registrationDeadline: ""
+        title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: ""
       });
-      setPoster(null); // Clear the file input state
+      setPoster(null);
       fetchMyEvents();
     } catch (error) {
       alert(error.response?.data?.message || "Failed to create event");
@@ -78,12 +51,12 @@ const OrganizerDashboard = () => {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="max-w-[1400px] mx-auto p-6 md:p-10 space-y-12">
       {/* SECTION 1: CREATE EVENT FORM */}
-      <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div className="mb-8">
-          <h2 className="text-3xl font-black text-gray-800">Create New Event</h2>
-          <p className="text-gray-500">Launch a new initiative for the campus community.</p>
+      <section className="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+        <div className="mb-10">
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">Create New Event</h2>
+          <p className="text-gray-500 font-medium mt-2">Launch a new initiative for the campus community.</p>
         </div>
 
         <form onSubmit={submitHandler} className="space-y-6">
@@ -91,7 +64,7 @@ const OrganizerDashboard = () => {
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Event Title</label>
               <input
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition"
                 placeholder="e.g. Web Development Workshop"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -102,7 +75,7 @@ const OrganizerDashboard = () => {
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Category</label>
               <select
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition cursor-pointer"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               >
@@ -123,7 +96,7 @@ const OrganizerDashboard = () => {
               <label className="text-sm font-bold text-gray-700 ml-1">Date</label>
               <input
                 type="date"
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
@@ -133,7 +106,7 @@ const OrganizerDashboard = () => {
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Time</label>
               <input
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition"
                 placeholder="e.g. 10:00 AM"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
@@ -141,22 +114,20 @@ const OrganizerDashboard = () => {
               />
             </div>
 
-            {/* Day 21: Added Poster Image Upload Input */}
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Event Poster (Optional)</label>
               <input
                 type="file"
                 accept="image/*"
-                className="w-full p-3 bg-gray-50 border-dashed border-2 border-gray-200 rounded-xl outline-none transition cursor-pointer"
+                className="w-full p-4 bg-gray-50 border-dashed border-2 border-gray-300 rounded-xl outline-none transition cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 onChange={(e) => setPoster(e.target.files[0])}
               />
-              <p className="text-[10px] text-gray-400 ml-1 italic">JPG, PNG or GIF. Max 2MB recommended.</p>
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Venue</label>
               <input
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition"
                 placeholder="e.g. Main Auditorium, Block A"
                 value={formData.venue}
                 onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
@@ -167,7 +138,7 @@ const OrganizerDashboard = () => {
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-gray-700 ml-1">Description</label>
               <textarea
-                className="w-full p-3 bg-gray-50 border-transparent border focus:border-blue-500 focus:bg-white rounded-xl outline-none transition h-32"
+                className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl outline-none transition h-32 resize-none"
                 placeholder="Provide details about the event goals, speakers, and requirements..."
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -178,7 +149,7 @@ const OrganizerDashboard = () => {
 
           <button 
             type="submit" 
-            className="w-full md:w-auto px-10 py-4 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition shadow-xl active:scale-95"
+            className="w-full md:w-auto px-10 py-4 bg-gray-900 text-white font-black rounded-xl hover:bg-blue-600 transition-colors shadow-lg active:scale-95"
           >
             Deploy Event
           </button>
@@ -188,64 +159,65 @@ const OrganizerDashboard = () => {
       {/* SECTION 2: MANAGED EVENTS */}
       <section>
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black text-gray-800 tracking-tight">Managed Events</h2>
-          <div className="bg-gray-100 px-4 py-2 rounded-full text-xs font-bold text-gray-500 uppercase tracking-widest">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Managed Events</h2>
+          <div className="bg-gray-200 px-4 py-1.5 rounded-full text-xs font-black text-gray-600 uppercase tracking-widest">
             {events.length} Total
           </div>
         </div>
 
         {loading ? (
-          <p className="text-center text-gray-400 py-20 animate-pulse">Syncing events...</p>
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
+          </div>
         ) : events.length === 0 ? (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl p-20 text-center">
-            <p className="text-gray-400 font-bold">You haven't created any events yet.</p>
+          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-20 text-center shadow-sm">
+            <p className="text-gray-500 font-medium text-lg">You haven't created any events yet.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {events.map((event) => (
-              <div key={event._id} className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+              <div key={event._id} className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
                 <div>
-                  <div className="flex justify-between items-start mb-6">
+                  <div className="flex justify-between items-start mb-4">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      event.isApproved ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"
+                      event.isApproved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                     }`}>
                       {event.isApproved ? "Approved ✅" : "Pending ⏳"}
                     </span>
-                    <div className="text-[10px] font-bold text-gray-300 uppercase">{event.category}</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase bg-gray-50 px-2 py-1 rounded-md">{event.category}</div>
                   </div>
 
-                  {/* Day 21: Added small preview in dashboard if poster exists */}
                   {event.poster && (
                     <img 
                       src={event.poster} 
                       alt="Event" 
-                      className="w-full h-32 object-cover rounded-xl mb-4 border border-gray-100" 
+                      className="w-full h-36 object-cover rounded-xl mb-4 border border-gray-100 group-hover:opacity-90 transition-opacity" 
                     />
                   )}
 
-                  <h4 className="text-2xl font-bold text-gray-800 leading-tight mb-4">{event.title}</h4>
+                  <h4 className="text-xl font-bold text-gray-900 leading-tight mb-3 line-clamp-2">{event.title}</h4>
                   
-                  <div className="space-y-2 mb-8 text-sm text-gray-400">
+                  <div className="space-y-1 mb-6 text-sm text-gray-500 font-medium">
                     <p>📅 {new Date(event.date).toLocaleDateString()}</p>
-                    <p>📍 {event.venue}</p>
+                    <p className="truncate">📍 {event.venue}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+                <div className="flex items-center justify-between pt-5 border-t border-gray-100">
                   <div className="flex items-center gap-3">
                     <span className="text-3xl font-black text-blue-600">
                       {event.registrationCount || 0}
                     </span>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter leading-none">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight">
                       Student <br /> Registrations
                     </p>
                   </div>
                   
                   <button 
                     onClick={() => navigate(`/organizer/event/${event._id}`)}
-                    className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-100"
+                    className="px-5 py-2.5 bg-gray-50 text-gray-800 text-sm font-bold rounded-xl hover:bg-blue-600 hover:text-white transition-colors border border-gray-200"
                   >
-                    View List →
+                    View List
                   </button>
                 </div>
               </div>
