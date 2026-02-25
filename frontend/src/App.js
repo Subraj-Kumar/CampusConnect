@@ -17,13 +17,13 @@ import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import EventAttendees from "./pages/EventAttendees";
+import EditEvent from "./pages/EditEvent"; // 🚀 NEW IMPORT
 import Profile from "./pages/Profile";
 import OAuthSuccess from "./pages/OAuthSuccess";
 
 function App() {
   return (
     <Router>
-      {/* The Layout wrapper ensures Navbar and global styling appear on every page */}
       <Layout>
         <Routes>
           {/* --- 1. Public Discovery Routes --- */}
@@ -31,8 +31,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/events/:id" element={<EventDetails />} />
-          
-          {/* 🌐 MISSING ROUTE ADDED HERE: Catch Google's redirect */}
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
           {/* --- 2. Shared Authenticated Routes --- */}
@@ -45,7 +43,7 @@ function App() {
             } 
           />
 
-          {/* --- 3. Student Dashboard (Personalized Enrollment) --- */}
+          {/* --- 3. Student Dashboard --- */}
           <Route 
             path="/student" 
             element={
@@ -55,7 +53,7 @@ function App() {
             } 
           />
 
-          {/* --- 4. Organizer Workflow (Event Creation & Management) --- */}
+          {/* --- 4. Organizer Workflow --- */}
           <Route 
             path="/organizer" 
             element={
@@ -65,7 +63,17 @@ function App() {
             } 
           />
 
-          {/* --- 5. Attendee List (Organizer Only) --- */}
+          {/* 🚀 NEW ROUTE: Edit Event (Organizer Only) */}
+          <Route 
+            path="/organizer/edit-event/:id" 
+            element={
+              <ProtectedRoute role="organizer">
+                <EditEvent />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* --- 5. Attendee List --- */}
           <Route 
             path="/organizer/event/:id" 
             element={
@@ -75,7 +83,7 @@ function App() {
             } 
           />
 
-          {/* --- 6. Admin Panel (Moderation & Security) --- */}
+          {/* --- 6. Admin Panel --- */}
           <Route 
             path="/admin" 
             element={

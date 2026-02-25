@@ -60,17 +60,31 @@ const EventDetails = () => {
     </div>
   );
 
+  // 🚀 Check if the logged-in user is the organizer of this event
+  const isOwner = user && event.organizer && user._id === event.organizer._id;
+
   return (
     <div className="max-w-[1200px] mx-auto p-6 md:p-10 min-h-screen">
       
-      {/* 🚀 BACK NAVIGATION */}
-      <Link to="/" className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors mb-8 group">
-        <span className="mr-2 group-hover:-translate-x-1 transition-transform">←</span> Back to Discovery
-      </Link>
+      {/* 🚀 TOP NAVIGATION & OWNER ACTIONS */}
+      <div className="flex justify-between items-center mb-8">
+        <Link to="/" className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors group">
+          <span className="mr-2 group-hover:-translate-x-1 transition-transform">←</span> Back to Discovery
+        </Link>
+
+        {isOwner && (
+          <button 
+            onClick={() => navigate(`/organizer/edit-event/${event._id}`)}
+            className="bg-yellow-50 text-yellow-700 px-6 py-2 rounded-xl font-bold text-sm border border-yellow-100 hover:bg-yellow-500 hover:text-white transition-all shadow-sm"
+          >
+            Edit Event ✏️
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
         
-        {/* 🖼️ LEFT SIDE: THE POSTER */}
+        {/* 🖼️ LEFT SIDE: THE POSTER & DESCRIPTION */}
         <div className="lg:col-span-2 space-y-8">
           <div className="bg-white p-3 rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden">
             {event.poster ? (
@@ -141,6 +155,26 @@ const EventDetails = () => {
                 </div>
               </div>
             </div>
+
+            {/* 🍕 REFRESHMENT INDICATOR */}
+            {event.hasRefreshments && (
+              <div className="flex items-center gap-4 bg-green-50 p-4 rounded-2xl border border-green-100 text-green-700 animate-in fade-in zoom-in duration-500">
+                <span className="text-2xl">🍕</span>
+                <p className="font-bold text-xs uppercase tracking-wide">Refreshments will be provided</p>
+              </div>
+            )}
+
+            {/* 🔗 EXTERNAL GOOGLE FORM LINK */}
+            {event.externalFormUrl && (
+              <a 
+                href={event.externalFormUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-full text-center py-4 bg-indigo-50 text-indigo-600 font-black rounded-2xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all mb-4 shadow-sm"
+              >
+                🔗 Open Registration Form
+              </a>
+            )}
 
             {/* ACTION BUTTON */}
             {(!user || user.role === "student") && (

@@ -28,10 +28,9 @@ const eventSchema = new mongoose.Schema(
       type: String,
       required: true
     },
-    // Added Day 21: URL of the event poster image stored in Cloudinary
     poster: {
       type: String,
-      default: "" 
+      default: "" // Cloudinary URL stored here
     },
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
@@ -39,12 +38,27 @@ const eventSchema = new mongoose.Schema(
       required: true
     },
     organizationName: {
-      type: String // Club / Dept / Placement Cell
+      type: String
     },
     registrationDeadline: {
       type: Date
     },
     isApproved: {
+      type: Boolean,
+      default: false
+    },
+    // 🚀 ANALYTICS TRACKING
+    registrationCount: {
+      type: Number,
+      default: 0
+    },
+    // 🔗 GOOGLE FORM / EXTERNAL LINK
+    externalFormUrl: {
+      type: String,
+      default: ""
+    },
+    // 🍕 AMENITIES TOGGLE
+    hasRefreshments: {
       type: Boolean,
       default: false
     }

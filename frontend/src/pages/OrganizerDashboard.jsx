@@ -8,8 +8,10 @@ const OrganizerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [poster, setPoster] = useState(null);
 
+  // 🚀 UPDATED: Added externalFormUrl and hasRefreshments to initial state
   const [formData, setFormData] = useState({
-    title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: ""
+    title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: "",
+    externalFormUrl: "", hasRefreshments: false 
   });
 
   const fetchMyEvents = async () => {
@@ -40,8 +42,11 @@ const OrganizerDashboard = () => {
         headers: { "Content-Type": "multipart/form-data" }
       });
       alert("Event created successfully!");
+      
+      // 🚀 UPDATED: Reset the new fields after successful submission
       setFormData({
-        title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: ""
+        title: "", description: "", category: "Workshop", date: "", time: "", venue: "", registrationDeadline: "",
+        externalFormUrl: "", hasRefreshments: false
       });
       setPoster(null);
       fetchMyEvents();
@@ -145,6 +150,32 @@ const OrganizerDashboard = () => {
                 required
               />
             </div>
+
+            {/* 🚀 NEW: GOOGLE FORM LINK */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-bold text-blue-600 ml-1">External Registration (Google Form / Link)</label>
+              <input
+                className="w-full p-4 bg-blue-50 border border-blue-100 focus:border-blue-500 rounded-xl outline-none transition"
+                value={formData.externalFormUrl}
+                onChange={(e) => setFormData({ ...formData, externalFormUrl: e.target.value })}
+                placeholder="https://forms.gle/..."
+              />
+            </div>
+
+            {/* 🚀 NEW: REFRESHMENTS TOGGLE */}
+            <div className="md:col-span-2 flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <input
+                type="checkbox"
+                className="w-5 h-5 accent-blue-600 cursor-pointer"
+                checked={formData.hasRefreshments}
+                onChange={(e) => setFormData({ ...formData, hasRefreshments: e.target.checked })}
+                id="refreshments"
+              />
+              <label htmlFor="refreshments" className="font-bold text-gray-700 cursor-pointer select-none">
+                Will refreshments be provided? 🥤🍕
+              </label>
+            </div>
+
           </div>
 
           <button 
@@ -200,6 +231,8 @@ const OrganizerDashboard = () => {
                   <div className="space-y-1 mb-6 text-sm text-gray-500 font-medium">
                     <p>📅 {new Date(event.date).toLocaleDateString()}</p>
                     <p className="truncate">📍 {event.venue}</p>
+                    {/* Optional: Show tiny refreshment badge here if you want organizers to see it */}
+                    {event.hasRefreshments && <p className="text-green-600 text-xs mt-1">🍕 Refreshments included</p>}
                   </div>
                 </div>
 
@@ -213,12 +246,21 @@ const OrganizerDashboard = () => {
                     </p>
                   </div>
                   
-                  <button 
-                    onClick={() => navigate(`/organizer/event/${event._id}`)}
-                    className="px-5 py-2.5 bg-gray-50 text-gray-800 text-sm font-bold rounded-xl hover:bg-blue-600 hover:text-white transition-colors border border-gray-200"
-                  >
-                    View List
-                  </button>
+                  {/* 🚀 NEW: Button Group (Edit + View) */}
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => navigate(`/organizer/edit-event/${event._id}`)}
+                      className="px-4 py-2.5 bg-yellow-50 text-yellow-700 text-sm font-bold rounded-xl hover:bg-yellow-500 hover:text-white transition-colors border border-yellow-100"
+                    >
+                      Edit ✏️
+                    </button>
+                    <button 
+                      onClick={() => navigate(`/organizer/event/${event._id}`)}
+                      className="px-4 py-2.5 bg-gray-50 text-gray-800 text-sm font-bold rounded-xl hover:bg-blue-600 hover:text-white transition-colors border border-gray-200"
+                    >
+                      View List
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
