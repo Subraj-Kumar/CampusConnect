@@ -185,11 +185,23 @@ exports.getEventAttendees = async (req, res) => {
 // 2. STUDENT & PUBLIC ACTIONS
 // ==========================================
 
-// @desc    Get all approved events
+// @desc    Get all approved events (includes upcoming and past 2 weeks)
 exports.getApprovedEvents = async (req, res) => {
   try {
     const { search, category, sort } = req.query;
-    let query = { isApproved: true };
+
+    const today = new Date();
+    // Reset today to midnight for accurate day calculations
+    today.setHours(0, 0, 0, 0); 
+    
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(today.getDate() - 14);
+
+    // Only show events from the last 2 weeks onward
+    let query = {
+      isApproved: true,
+      date: { $gte: twoWeeksAgo } 
+    };
 
     if (search) {
       query.title = { $regex: search, $options: "i" };
@@ -205,7 +217,21 @@ exports.getApprovedEvents = async (req, res) => {
     else if (sort === "desc") eventsQuery = eventsQuery.sort({ date: -1 });
 
     const events = await eventsQuery;
-    res.json(events);
+
+    // Add daysLeft calculation to the response payload
+    const enhancedEvents = events.map((event) => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0); // Normalize time for accurate day count
+      const diff = eventDate - today;
+      const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+      return {
+        ...event._doc,
+        daysLeft
+      };
+    });
+
+    res.json(enhancedEvents);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

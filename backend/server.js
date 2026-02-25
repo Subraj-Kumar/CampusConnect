@@ -1,54 +1,53 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const cors = require("cors");
-const { isAuthenticated } = require("./middleware/authMiddleware");
-const { isAdmin } = require("./middleware/roleMiddleware");
-const Event = require("./models/Event");
 
+// 🟢 CRITICAL FIX: Load environment variables BEFORE importing anything else!
 dotenv.config();
 
+const cors = require("cors");
 const connectDB = require("./config/db");
+
+// Import Routes
+const authRoutes = require("./routes/authRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+
+// Import Utilities
+const startCleanupJob = require("./utils/cleanupOldEvents"); // Phase D Cleanup
 
 const app = express();
 
-// Connect DB
-connectDB();
-
-// Middlewares
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/events", require("./routes/eventRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
+app.use(express.urlencoded({ extended: true }));
 
+// --- 📡 API Routes ---
+app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/admin", adminRoutes);
 
-// Test Route
-app.get("/health", (req, res) => {
-  res.json({ status: "OK", message: "CampusConnect backend running" });
-});
-app.get("/api/admin/test", isAuthenticated, isAdmin, (req, res) => {
-  res.json({
-    message: "Welcome Admin",
-    user: req.user
-  });
+// Health Check
+app.get("/", (req, res) => {
+  res.send("CampusConnect API is running...");
 });
 
-// Start server
+// --- 🏗️ Server Initialization ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
-app.get("/api/test-event", async (req, res) => {
-  const event = await Event.create({
-    title: "Test Workshop",
-    description: "Testing event model",
-    category: "Workshop",
-    date: new Date(),
-    time: "10:00 AM",
-    venue: "Main Auditorium",
-    organizer: "6978bc1842bedb5226a22247"
+// Connect to MongoDB and then start services
+connectDB().then(() => {
+  console.log("🚀 Database Connected Successfully");
+
+  // 🧹 Start the Automated Cleanup System (Cron Job)
+  // This handles 30-day data retention and Cloudinary image purging
+  startCleanupJob(); 
+
+  app.listen(PORT, () => {
+    console.log(`🔥 Server running on http://localhost:${PORT}`);
+    console.log(`🕒 Cron System: Active and scheduled for daily maintenance`);
   });
-
-  res.json(event);
+}).catch((err) => {
+  console.error("❌ Database Connection Failed:", err.message);
+  process.exit(1);
 });
