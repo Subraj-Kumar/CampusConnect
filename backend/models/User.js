@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["student", "organizer", "admin"], default: "student" },
   organization: { type: String }, // For organizers
   
+  // 🚀 NEW: Account approval flag for spam prevention
+  isApproved: { type: Boolean, default: false },
+  
   // NEW ACADEMIC FIELDS (Phase C)
   batch: { type: String, trim: true },
   rollNumber: { type: String, trim: true, unique: true, sparse: true },

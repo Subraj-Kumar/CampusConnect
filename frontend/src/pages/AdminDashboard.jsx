@@ -1,120 +1,141 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../api/axios";
 
 const AdminDashboard = () => {
-  const [events, setEvents] = useState([]);
+  const [pendingEvents, setPendingEvents] = useState([]);
+  const [pendingOrganizers, setPendingOrganizers] = useState([]);
+  const [activeTab, setActiveTab] = useState("events"); // 'events' or 'organizers'
   const [loading, setLoading] = useState(true);
 
-  const fetchPendingEvents = async () => {
+  const fetchData = async () => {
     try {
-      const { data } = await API.get("/admin/events/pending");
-      setEvents(data);
+      setLoading(true);
+      // Fetch both pending events and pending organizers simultaneously
+      const [eventsRes, orgsRes] = await Promise.all([
+        API.get("/events/admin/pending"), // Adjust if your route is different
+        API.get("/auth/admin/organizers/pending")
+      ]);
+      setPendingEvents(eventsRes.data);
+      setPendingOrganizers(orgsRes.data);
     } catch (error) {
-      console.error("Failed to fetch pending events", error);
+      console.error("Failed to fetch admin data", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPendingEvents();
+    fetchData();
   }, []);
 
+  // --- EVENT HANDLERS ---
   const approveEvent = async (id) => {
     try {
-      await API.put(`/admin/events/${id}/approve`);
-      fetchPendingEvents();
+      await API.put(`/events/${id}/approve`);
+      setPendingEvents(pendingEvents.filter((e) => e._id !== id));
     } catch (error) {
       alert("Failed to approve event");
     }
   };
 
   const rejectEvent = async (id) => {
-    if (window.confirm("Are you sure you want to completely reject and delete this event?")) {
+    try {
+      await API.delete(`/events/${id}/reject`);
+      setPendingEvents(pendingEvents.filter((e) => e._id !== id));
+    } catch (error) {
+      alert("Failed to reject event");
+    }
+  };
+
+  // --- ORGANIZER HANDLERS ---
+  const approveOrganizer = async (id) => {
+    try {
+      await API.put(`/auth/admin/organizers/${id}/approve`);
+      setPendingOrganizers(pendingOrganizers.filter((o) => o._id !== id));
+    } catch (error) {
+      alert("Failed to approve organizer");
+    }
+  };
+
+  const rejectOrganizer = async (id) => {
+    if(window.confirm("Are you sure? This will delete the user account.")) {
       try {
-        await API.delete(`/admin/events/${id}/reject`);
-        fetchPendingEvents();
+        await API.delete(`/auth/admin/organizers/${id}/reject`);
+        setPendingOrganizers(pendingOrganizers.filter((o) => o._id !== id));
       } catch (error) {
-        alert("Failed to reject event");
+        alert("Failed to reject organizer");
       }
     }
   };
 
+  if (loading) return <div className="text-center py-20 font-bold text-gray-500 animate-pulse">Loading secure dashboard...</div>;
+
   return (
-    <div className="max-w-[1400px] mx-auto p-6 md:p-10 min-h-screen">
-      
-      {/* HEADER SECTION */}
-      <header className="mb-10 bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Admin Moderation Panel</h1>
-          <p className="text-gray-500 mt-2 font-medium">Review and approve events submitted by organizers.</p>
-        </div>
-        <div className="hidden md:flex items-center gap-3 bg-yellow-50 px-6 py-3 rounded-xl border border-yellow-100">
-          <span className="text-xl">⚠️</span>
-          <p className="text-yellow-700 font-bold text-sm">{events.length} Pending Approval</p>
-        </div>
-      </header>
+    <div className="max-w-6xl mx-auto p-6 md:p-10">
+      <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-8">Admin Control Panel</h1>
 
-      {/* MODERATION QUEUE */}
-      <section>
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-          <span className="bg-gray-100 p-2.5 rounded-xl shadow-sm">📥</span> 
-          Pending Event Queue
-        </h2>
+      {/* TAB NAVIGATION */}
+      <div className="flex gap-4 mb-8 border-b border-gray-200 pb-4">
+        <button 
+          onClick={() => setActiveTab("events")}
+          className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === "events" ? "bg-blue-600 text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+        >
+          Pending Events ({pendingEvents.length})
+        </button>
+        <button 
+          onClick={() => setActiveTab("organizers")}
+          className={`px-6 py-2.5 rounded-xl font-bold transition-all ${activeTab === "organizers" ? "bg-gray-900 text-white shadow-md" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+        >
+          Pending Organizers ({pendingOrganizers.length})
+        </button>
+      </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-400"></div>
-          </div>
-        ) : events.length === 0 ? (
-          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-16 text-center shadow-sm">
-            <p className="text-green-600 font-bold text-xl mb-2">Queue is empty! 🎉</p>
-            <p className="text-gray-500 font-medium text-sm">All organizer submissions have been reviewed.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <div key={event._id} className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col justify-between">
-                
-                <div className="mb-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="bg-yellow-100 text-yellow-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
-                      Action Required
-                    </span>
-                    <span className="text-xs font-bold text-gray-400 uppercase">{event.category}</span>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-3 leading-relaxed">
-                    {event.description}
-                  </p>
-
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-2 text-sm font-medium text-gray-700">
-                    <p className="flex items-center gap-2"><span className="text-gray-400">👤 Organizer:</span> {event.organizer?.name}</p>
-                    <p className="flex items-center gap-2"><span className="text-gray-400">📅 Date:</span> {new Date(event.date).toLocaleDateString()}</p>
-                    <p className="flex items-center gap-2"><span className="text-gray-400">📍 Venue:</span> {event.venue}</p>
-                  </div>
+      {/* TAB CONTENT: EVENTS */}
+      {activeTab === "events" && (
+        <div className="space-y-6">
+          {pendingEvents.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-3xl border border-gray-100 text-gray-500 font-medium">No pending events. You're all caught up!</div>
+          ) : (
+            pendingEvents.map((event) => (
+              <div key={event._id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">{event.title}</h3>
+                  <p className="text-gray-500 mt-1">By: {event.organizationName} | Date: {new Date(event.date).toLocaleDateString()}</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-100">
-                  <button 
-                    onClick={() => rejectEvent(event._id)} 
-                    className="w-full py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-colors border border-red-100 text-sm"
-                  >
-                    Reject & Delete
-                  </button>
-                  <button 
-                    onClick={() => approveEvent(event._id)} 
-                    className="w-full py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors shadow-md shadow-green-200 text-sm"
-                  >
-                    Approve Event
-                  </button>
+                <div className="flex gap-3 w-full md:w-auto">
+                  <button onClick={() => approveEvent(event._id)} className="flex-1 md:flex-none px-6 py-2.5 bg-green-50 text-green-700 font-bold rounded-xl hover:bg-green-600 hover:text-white transition-all">Approve</button>
+                  <button onClick={() => rejectEvent(event._id)} className="flex-1 md:flex-none px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all">Reject</button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* TAB CONTENT: ORGANIZERS */}
+      {activeTab === "organizers" && (
+        <div className="space-y-6">
+          {pendingOrganizers.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-3xl border border-gray-100 text-gray-500 font-medium">No pending organizers.</div>
+          ) : (
+            pendingOrganizers.map((org) => (
+              <div key={org._id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xl font-black text-gray-900">{org.name}</h3>
+                    <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black uppercase tracking-wider rounded-lg">Organizer</span>
+                  </div>
+                  <p className="text-gray-500 mt-1">Email: {org.email} | Organization: {org.organization || "N/A"}</p>
+                </div>
+                <div className="flex gap-3 w-full md:w-auto">
+                  <button onClick={() => approveOrganizer(org._id)} className="flex-1 md:flex-none px-6 py-2.5 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all">Approve Account</button>
+                  <button onClick={() => rejectOrganizer(org._id)} className="flex-1 md:flex-none px-6 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-600 hover:text-white transition-all">Deny & Delete</button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };

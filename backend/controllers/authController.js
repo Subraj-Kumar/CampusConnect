@@ -23,12 +23,16 @@ exports.registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const assignedRole = role || "student";
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: role || "student", // Default to student role
+      role: assignedRole,
       organization,
+      // 🚀 NEW: Auto-approve students and admins, but flag organizers for manual review
+      isApproved: assignedRole === "organizer" ? false : true 
     });
 
     res.status(201).json({
@@ -36,6 +40,7 @@ exports.registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isApproved: user.isApproved, // 🚀 NEW: Send status to frontend
       token: generateToken(user._id, user.role),
     });
   } catch (error) {
@@ -65,9 +70,10 @@ exports.loginUser = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      batch: user.batch,      // Academic field
-      rollNumber: user.rollNumber, // Academic field
-      branch: user.branch,    // Academic field
+      isApproved: user.isApproved, // 🚀 NEW: Send status to frontend
+      batch: user.batch,      
+      rollNumber: user.rollNumber, 
+      branch: user.branch,    
       token: generateToken(user._id, user.role),
     });
   } catch (error) {
@@ -103,6 +109,56 @@ exports.updateProfile = async (req, res) => {
     if (error.code === 11000) {
       return res.status(400).json({ message: "Roll number already exists" });
     }
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ==========================================
+// ADMIN ACTIONS: ORGANIZER APPROVAL
+// ==========================================
+
+// @desc    Get all organizers waiting for approval
+// @route   GET /api/auth/admin/organizers/pending
+exports.getPendingOrganizers = async (req, res) => {
+  try {
+    // 🚀 THE FIX: $ne (Not Equal) catches 'false' AND older accounts missing the field entirely
+    const organizers = await User.find({ 
+      role: "organizer", 
+      isApproved: { $ne: true } 
+    }).select("-password");
+    
+    res.json(organizers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Approve an organizer account
+// @route   PUT /api/auth/admin/organizers/:id/approve
+exports.approveOrganizer = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Organizer not found" });
+    
+    user.isApproved = true;
+    await user.save();
+    
+    res.json({ message: "Organizer approved successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject and delete a spam organizer account
+// @route   DELETE /api/auth/admin/organizers/:id/reject
+exports.rejectOrganizer = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "Organizer not found" });
+    
+    await user.deleteOne();
+    res.json({ message: "Organizer rejected and removed" });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };

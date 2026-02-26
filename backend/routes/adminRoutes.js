@@ -10,10 +10,9 @@ const {
 const { isAuthenticated } = require("../middleware/authMiddleware");
 const { isAdmin } = require("../middleware/roleMiddleware");
 
+// Notice these paths changed to match a different mount point
 router.get("/events/pending", isAuthenticated, isAdmin, getPendingEvents);
-
 router.put("/events/:id/approve", isAuthenticated, isAdmin, approveEvent);
-
 router.delete("/events/:id/reject", isAuthenticated, isAdmin, rejectEvent);
 
 module.exports = router;
