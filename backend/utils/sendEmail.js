@@ -1,7 +1,6 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (to, subject, text) => {
-  // DEBUG: Confirms environment variables are reaching the cloud instance
   console.log("🔍 Checking Email Config:", {
     user: process.env.EMAIL_USER ? "FOUND" : "MISSING",
     pass: process.env.EMAIL_PASS ? "FOUND" : "MISSING"
@@ -10,20 +9,21 @@ const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 465, // Use 465 for implicit SSL/TLS
-      secure: true, 
+      port: 587, // 👈 Trying Port 587 (Standard for StartTLS)
+      secure: false, // 👈 Must be false for port 587
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
-      // 🚀 THE PRODUCTION FIXES:
-      family: 4,           // Forces IPv4 to resolve ENETUNREACH errors on Render
-      connectionTimeout: 25000, // Wait 20s - essential for campus/cloud latency
-      greetingTimeout: 25000,
-      socketTimeout: 25000,
-      pool: true,          // Keeps connection open for multiple emails (efficient)
-      maxConnections: 1,
-      maxMessages: 10
+      tls: {
+        rejectUnauthorized: false // 👈 Helps bypass strict handshake failures on cloud networks
+      },
+      // 🚀 THE ULTIMATE RENDER STABILITY SETTINGS:
+      family: 4,
+      connectionTimeout: 30000, // Increased to 30 seconds
+      greetingTimeout: 30000,
+      socketTimeout: 30000,
+      pool: true // 👈 Keeps the connection open to avoid repeated handshakes
     });
 
     const mailOptions = {
@@ -37,7 +37,6 @@ const sendEmail = async (to, subject, text) => {
     console.log("✅ Email sent successfully:", info.messageId);
     
   } catch (error) {
-    // Prevents a total crash during your Science Day demonstration
     console.error("❌ Email Service Error:", error.message);
   }
 };
