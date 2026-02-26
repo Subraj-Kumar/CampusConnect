@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (to, subject, text) => {
-  // DEBUG: Check if variables are loading
+  // DEBUG: Confirms environment variables are reaching the cloud instance
   console.log("🔍 Checking Email Config:", {
     user: process.env.EMAIL_USER ? "FOUND" : "MISSING",
     pass: process.env.EMAIL_PASS ? "FOUND" : "MISSING"
@@ -10,17 +10,20 @@ const sendEmail = async (to, subject, text) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // Use SSL
+      port: 465, // Use 465 for implicit SSL/TLS
+      secure: true, 
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
-      // 🚀 THE CRITICAL FIXES FOR RENDER:
-      family: 4,           // Forces IPv4 to resolve ENETUNREACH errors
-      connectionTimeout: 15000, // Wait 15s for slow campus/cloud networks
-      greetingTimeout: 15000,
-      socketTimeout: 15000
+      // 🚀 THE PRODUCTION FIXES:
+      family: 4,           // Forces IPv4 to resolve ENETUNREACH errors on Render
+      connectionTimeout: 25000, // Wait 20s - essential for campus/cloud latency
+      greetingTimeout: 25000,
+      socketTimeout: 25000,
+      pool: true,          // Keeps connection open for multiple emails (efficient)
+      maxConnections: 1,
+      maxMessages: 10
     });
 
     const mailOptions = {
@@ -34,7 +37,7 @@ const sendEmail = async (to, subject, text) => {
     console.log("✅ Email sent successfully:", info.messageId);
     
   } catch (error) {
-    // We catch the error so the whole server doesn't crash during your demo
+    // Prevents a total crash during your Science Day demonstration
     console.error("❌ Email Service Error:", error.message);
   }
 };
