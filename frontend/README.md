@@ -267,9 +267,9 @@ This project is licensed under the **MIT License**.
 B.Tech – Computer Science & Engineering  
 6th Semester Major Project  
 
-📧 your.email@example.com  
-🌐 LinkedIn: https://linkedin.com/in/yourprofile  
-💻 GitHub: https://github.com/your-username  
+📧 kumarsubraj97@gmail.com  
+🌐 LinkedIn: https://www.linkedin.com/in/subraj-kumar/ 
+💻 GitHub: https://github.com/Subraj-Kumar  
 
 ---
 
