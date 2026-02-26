@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://13.126.202.153:5000/api"
+  baseURL: "https://campusconnect-api-zmea.onrender.com/api"
 });
 
 // Attach token automatically
