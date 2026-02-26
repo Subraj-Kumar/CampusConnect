@@ -8,29 +8,34 @@ const {
   registerUser,
   loginUser,
   updateProfile,
-  getPendingOrganizers, // 🚀 NEW: Admin functions
+  getPendingOrganizers, 
   approveOrganizer,
-  rejectOrganizer
+  rejectOrganizer,
+  forgotPassword,  // 🚀 NEW: Added from our previous session
+  resetPassword    // 🚀 NEW: Added from our previous session
 } = require("../controllers/authController");
 
 // Import middleware
 const { isAuthenticated } = require("../middleware/authMiddleware");
-const { isAdmin } = require("../middleware/roleMiddleware"); // 🚀 NEW: Required to protect the admin routes
+const { isAdmin } = require("../middleware/roleMiddleware"); 
+
+// 🚀 SMART ROUTING: Use an environment variable for the frontend URL, fallback to localhost for testing
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 // --- 📧 STANDARD EMAIL ROUTES ---
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/forgotpassword", forgotPassword); // 🚀 NEW: Password recovery
+router.put("/resetpassword/:resettoken", resetPassword); // 🚀 NEW: Password recovery
 
 // Profile route is protected - requires a valid JWT token
 router.put("/profile", isAuthenticated, updateProfile);
-
 
 // --- 🛡️ ADMIN ACTIONS (Organizer Approvals) ---
 // These routes require both login (isAuthenticated) AND admin privileges (isAdmin)
 router.get("/admin/organizers/pending", isAuthenticated, isAdmin, getPendingOrganizers);
 router.put("/admin/organizers/:id/approve", isAuthenticated, isAdmin, approveOrganizer);
 router.delete("/admin/organizers/:id/reject", isAuthenticated, isAdmin, rejectOrganizer);
-
 
 // --- 🌐 GOOGLE OAUTH ROUTES ---
 
@@ -43,7 +48,7 @@ router.get(
 // Step 2: Google redirects back here with the user's profile info
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false, failureRedirect: "http://localhost:3000/login" }),
+  passport.authenticate("google", { session: false, failureRedirect: `${CLIENT_URL}/login` }),
   (req, res) => {
     
     // 1. Generate our standard CampusConnect JWT
@@ -59,14 +64,14 @@ router.get(
       name: req.user.name,
       email: req.user.email,
       role: req.user.role,
-      isApproved: req.user.isApproved // 🚀 NEW: Make sure OAuth users also pass their approval status!
+      isApproved: req.user.isApproved 
     };
 
     // 3. Safely encode the user object into a URL string
     const encodedUser = encodeURIComponent(JSON.stringify(userData));
 
-    // 4. Bounce the user back to the React app with BOTH the token and the user data
-    res.redirect(`http://localhost:3000/oauth-success?token=${token}&user=${encodedUser}`);
+    // 4. Bounce the user back to the React app dynamically using CLIENT_URL
+    res.redirect(`${CLIENT_URL}/oauth-success?token=${token}&user=${encodedUser}`);
   }
 );
 
