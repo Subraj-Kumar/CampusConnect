@@ -7,13 +7,17 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ["student", "organizer", "admin"], default: "student" },
   organization: { type: String }, // For organizers
   
-  // 🚀 NEW: Account approval flag for spam prevention
+  // 🚀 Spam prevention flag
   isApproved: { type: Boolean, default: false },
   
-  // NEW ACADEMIC FIELDS (Phase C)
+  // ACADEMIC FIELDS (Phase C)
   batch: { type: String, trim: true },
   rollNumber: { type: String, trim: true, unique: true, sparse: true },
-  branch: { type: String, trim: true }
+  branch: { type: String, trim: true },
+
+  // 🚀 NEW: Password Reset Fields
+  resetPasswordToken: String,
+  resetPasswordExpire: Date
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

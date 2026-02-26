@@ -75,9 +75,17 @@ const Login = () => {
               />
             </div>
 
-            {/* PASSWORD INPUT */}
-            <div className="space-y-1">
-              <label className="text-sm font-bold text-gray-700 ml-1">Password</label>
+            {/* PASSWORD INPUT WITH FORGOT PASSWORD LINK */}
+            <div className="space-y-1 relative">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-sm font-bold text-gray-700">Password</label>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-xs font-bold text-blue-600 hover:underline"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <input
                 type="password"
                 className="w-full p-4 bg-gray-50 border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition"

@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail"); // Assuming your email util is here
 
 // Helper function to generate JWT
 const generateToken = (id, role) => {
@@ -31,7 +33,6 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       role: assignedRole,
       organization,
-      // 🚀 NEW: Auto-approve students and admins, but flag organizers for manual review
       isApproved: assignedRole === "organizer" ? false : true 
     });
 
@@ -40,7 +41,7 @@ exports.registerUser = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      isApproved: user.isApproved, // 🚀 NEW: Send status to frontend
+      isApproved: user.isApproved,
       token: generateToken(user._id, user.role),
     });
   } catch (error) {
@@ -64,13 +65,12 @@ exports.loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Returns full user object (excluding password) for frontend state
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      isApproved: user.isApproved, // 🚀 NEW: Send status to frontend
+      isApproved: user.isApproved,
       batch: user.batch,      
       rollNumber: user.rollNumber, 
       branch: user.branch,    
@@ -81,7 +81,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// @desc    Update user profile (Academic Profile Sync)
+// @desc    Update user profile
 // @route   PUT /api/auth/profile
 exports.updateProfile = async (req, res) => {
   try {
@@ -91,21 +91,17 @@ exports.updateProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update only provided fields to maintain existing data
     user.name = req.body.name || user.name;
     user.batch = req.body.batch || user.batch;
     user.rollNumber = req.body.rollNumber || user.rollNumber;
     user.branch = req.body.branch || user.branch;
 
     const updatedUser = await user.save();
-
-    // Prepare clean response object (omit sensitive data)
     const userResponse = updatedUser.toObject();
     delete userResponse.password;
 
     res.json(userResponse);
   } catch (error) {
-    // Catch common errors like duplicate rollNumber
     if (error.code === 11000) {
       return res.status(400).json({ message: "Roll number already exists" });
     }
@@ -113,15 +109,10 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// ==========================================
-// ADMIN ACTIONS: ORGANIZER APPROVAL
-// ==========================================
+// --- ADMIN ACTIONS: ORGANIZER APPROVAL ---
 
-// @desc    Get all organizers waiting for approval
-// @route   GET /api/auth/admin/organizers/pending
 exports.getPendingOrganizers = async (req, res) => {
   try {
-    // 🚀 THE FIX: $ne (Not Equal) catches 'false' AND older accounts missing the field entirely
     const organizers = await User.find({ 
       role: "organizer", 
       isApproved: { $ne: true } 
@@ -133,8 +124,6 @@ exports.getPendingOrganizers = async (req, res) => {
   }
 };
 
-// @desc    Approve an organizer account
-// @route   PUT /api/auth/admin/organizers/:id/approve
 exports.approveOrganizer = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -143,14 +132,12 @@ exports.approveOrganizer = async (req, res) => {
     user.isApproved = true;
     await user.save();
     
-    res.json({ message: "Organizer approved successfully", user });
+    res.json({ message: "Organizer approved successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Reject and delete a spam organizer account
-// @route   DELETE /api/auth/admin/organizers/:id/reject
 exports.rejectOrganizer = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -158,6 +145,57 @@ exports.rejectOrganizer = async (req, res) => {
     
     await user.deleteOne();
     res.json({ message: "Organizer rejected and removed" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- PASSWORD RESET FLOW ---
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(404).json({ message: "Email not found" });
+
+    const resetToken = crypto.randomBytes(20).toString("hex");
+    user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    const resetUrl = `${req.protocol}://${req.get("host")}/resetpassword/${resetToken}`;
+    const message = `You requested a password reset. Click here: \n\n ${resetUrl}`;
+
+    try {
+      await sendEmail(user.email, "Password Reset - CampusConnect", message);
+      res.status(200).json({ message: "Email sent" });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      return res.status(500).json({ message: "Email error" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const resetPasswordToken = crypto.createHash("sha256").update(req.params.resettoken).digest("hex");
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) return res.status(400).json({ message: "Invalid/Expired token" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

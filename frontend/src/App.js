@@ -17,9 +17,11 @@ import AdminDashboard from "./pages/AdminDashboard";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import EventAttendees from "./pages/EventAttendees";
-import EditEvent from "./pages/EditEvent"; // 🚀 NEW IMPORT
+import EditEvent from "./pages/EditEvent";
 import Profile from "./pages/Profile";
 import OAuthSuccess from "./pages/OAuthSuccess";
+import ForgotPassword from "./pages/ForgotPassword"; // 🚀 NEW IMPORT
+import ResetPassword from "./pages/ResetPassword";   // 🚀 NEW IMPORT
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="/" element={<Events />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} /> {/* 🚀 NEW ROUTE */}
+          <Route path="/resetpassword/:token" element={<ResetPassword />} /> {/* 🚀 NEW ROUTE */}
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/oauth-success" element={<OAuthSuccess />} />
 
@@ -63,7 +67,6 @@ function App() {
             } 
           />
 
-          {/* 🚀 NEW ROUTE: Edit Event (Organizer Only) */}
           <Route 
             path="/organizer/edit-event/:id" 
             element={
