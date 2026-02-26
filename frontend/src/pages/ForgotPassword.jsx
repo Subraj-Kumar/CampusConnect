@@ -11,7 +11,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await API.post("/auth/forgotpassword", { email });
+      await API.post("/auth/forgotpassword", { email });
       setMessage("Check your email for the reset link!");
     } catch (err) {
       setMessage(err.response?.data?.message || "Something went wrong.");
