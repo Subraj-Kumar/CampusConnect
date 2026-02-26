@@ -1,70 +1,287 @@
-# Getting Started with Create React App
+# 🎓 CampusConnect  
+### Role-Based University Event Management & Registration Platform  
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![Hero Image Placeholder](https://via.placeholder.com/1200x400?text=CampusConnect+Application+Screenshot)
 
-## Available Scripts
+![React](https://img.shields.io/badge/Frontend-React-blue?logo=react)
+![Node.js](https://img.shields.io/badge/Backend-Node.js-green?logo=node.js)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen?logo=mongodb)
+![Vercel](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)
+![Render](https://img.shields.io/badge/Backend-Render-46E3B7?logo=render)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🚀 Overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**CampusConnect** is a full-stack, role-based university event management and registration platform designed to streamline event discovery, organization, and moderation within academic institutions.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Built as both a **6th Semester CSE Major Project** and a **portfolio-grade production application**, the platform demonstrates secure authentication, cloud integration, role-based access control, and scalable architecture.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# 🎯 Core Features
 
-### `npm run build`
+## 👨‍🎓 Student Features
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- 🔍 Browse approved university events
+- 📝 Register / RSVP for events
+- 🔐 Secure Email/Password Login
+- 🌐 Google OAuth 2.0 Login
+- 🔑 Forgot / Reset Password Flow
+- 📚 Academic Profile Sync:
+  - Batch
+  - Branch
+  - Roll Number
+- 📊 Personalized dashboard with registered events
+- 🖼 View event posters hosted on Cloudinary
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🏢 Organizer Features
 
-### `npm run eject`
+> 🛡 Organizer accounts require **Admin Approval** before accessing the dashboard.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- 🗂 Create, edit, and manage events
+- 📌 Upload event posters
+- 👥 View attendee lists
+- 📈 Track real-time registration counts
+- 📬 Automatic email confirmation to registered students
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🛠 Admin Features
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- 🔎 Review pending organizer accounts
+- ✅ Approve or Reject organizer registrations
+- 🛡 Spam prevention via moderation workflow
+- 🔐 Role-based secure dashboard
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# 🧰 Tech Stack & Architecture
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🖥 Frontend
 
-### Code Splitting
+- ⚛️ React.js
+- 🔀 React Router
+- 🎨 Tailwind CSS
+- 🔐 Protected Routes (Role-Based Access Control)
+- 🌍 Hosted on **Vercel**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## 🖧 Backend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- 🟢 Node.js
+- 🚀 Express.js
+- 🔑 JWT Authentication
+- 🌐 Google OAuth 2.0
+- 📧 Nodemailer (Email Service)
+- ☁️ Hosted on **Render.com**
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🗄 Database
 
-### Advanced Configuration
+- 🍃 MongoDB Atlas (Cloud Hosted)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## 🖼 Media Storage
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- ☁️ Cloudinary (Event Posters)
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# 🏗 System Architecture & Security Flow
+
+## 🔐 Authentication & Authorization Flow
+
+```
+User Login (Email / Google OAuth)
+        ↓
+JWT Token Issued
+        ↓
+Token Stored in Local Storage
+        ↓
+Attached to API Requests (Authorization Header)
+        ↓
+Backend Middleware Verifies Token
+        ↓
+Role-Based Access Control (Student / Organizer / Admin)
+```
+
+### 🔒 Security Features
+
+- Stateless JWT authentication
+- Protected React Routes
+- Backend role-based middleware
+- Admin approval system for organizers
+- Environment variable protection
+- Cloud-based media isolation (Cloudinary)
+
+---
+
+# 📦 Local Setup & Installation
+
+## 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/your-username/campusconnect.git
+cd campusconnect
+```
+
+---
+
+## 2️⃣ Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file inside `/backend`:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_atlas_uri
+JWT_SECRET=your_super_secret_key
+
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_app_password
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+CLIENT_URL=http://localhost:3000
+```
+
+Run backend:
+
+```bash
+npm start
+```
+
+---
+
+## 3️⃣ Frontend Setup
+
+```bash
+cd ../frontend
+npm install
+```
+
+Create a `.env` file inside `/frontend`:
+
+For Create React App:
+
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+For Vite:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+Run frontend:
+
+```bash
+npm start
+```
+
+---
+
+## 🟢 Run Both Concurrently (Optional)
+
+Install concurrently:
+
+```bash
+npm install concurrently
+```
+
+Add to root `package.json`:
+
+```json
+"scripts": {
+  "dev": "concurrently \"cd backend && npm start\" \"cd frontend && npm start\""
+}
+```
+
+Run:
+
+```bash
+npm run dev
+```
+
+---
+
+# 📡 API Endpoints Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | Login user |
+| POST | `/api/events` | Create event (Organizer only) |
+| POST | `/api/events/:id/register` | Register for event (Student only) |
+| PUT | `/api/auth/admin/organizers/:id/approve` | Approve organizer account (Admin only) |
+
+---
+
+# 🌐 Deployment
+
+- Frontend → **Vercel**
+- Backend → **Render**
+- Database → **MongoDB Atlas**
+- Media Storage → **Cloudinary**
+
+---
+
+# 🔮 Future Enhancements
+
+- 🎟 QR Code-based Event Entry System
+- ⏰ Automated Email Reminders
+- 📊 Advanced Analytics Dashboard
+- 📱 Progressive Web App (PWA)
+- 🔔 Push Notifications
+- 📥 Export Registrations (CSV/PDF)
+- 🧠 AI-powered event recommendations
+
+---
+
+# 📜 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+# 👨‍💻 Author
+
+**Subraj Kumar**  
+B.Tech – Computer Science & Engineering  
+6th Semester Major Project  
+
+📧 your.email@example.com  
+🌐 LinkedIn: https://linkedin.com/in/yourprofile  
+💻 GitHub: https://github.com/your-username  
+
+---
+
+# ⭐ Project Highlights
+
+CampusConnect demonstrates:
+
+- Full-Stack MERN Architecture
+- Secure JWT & OAuth Authentication
+- Role-Based Access Control
+- Cloud Deployment & Media Storage
+- Admin Moderation System
+- Production-ready engineering practices
+
+---

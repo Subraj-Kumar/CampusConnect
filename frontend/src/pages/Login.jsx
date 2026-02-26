@@ -25,7 +25,7 @@ const Login = () => {
 
   const googleAuth = () => {
     // This directs the user to your backend Google OAuth route
-    window.location.href = "http://localhost:5000/api/auth/google"; 
+    window.location.href = "https://campusconnect-api.onrender.com/api/auth/google"; 
   };
 
   return (
