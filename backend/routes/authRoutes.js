@@ -3,36 +3,31 @@ const router = express.Router();
 const passport = require("passport"); 
 const jwt = require("jsonwebtoken");  
 
-// Import controller functions
+// Import controller functions (Password routes temporarily removed for demo stability)
 const {
   registerUser,
   loginUser,
   updateProfile,
   getPendingOrganizers, 
   approveOrganizer,
-  rejectOrganizer,
-  forgotPassword,  // 🚀 NEW: Added from our previous session
-  resetPassword    // 🚀 NEW: Added from our previous session
+  rejectOrganizer
 } = require("../controllers/authController");
 
 // Import middleware
 const { isAuthenticated } = require("../middleware/authMiddleware");
 const { isAdmin } = require("../middleware/roleMiddleware"); 
 
-// 🚀 SMART ROUTING: Use an environment variable for the frontend URL, fallback to localhost for testing
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+// 🚀 FOOLPROOF FIX: Hardcoded Vercel URL for the Science Day demo!
+const CLIENT_URL = "https://campus-connect-se.vercel.app";
 
 // --- 📧 STANDARD EMAIL ROUTES ---
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.post("/forgotpassword", forgotPassword); // 🚀 NEW: Password recovery
-router.put("/resetpassword/:resettoken", resetPassword); // 🚀 NEW: Password recovery
 
 // Profile route is protected - requires a valid JWT token
 router.put("/profile", isAuthenticated, updateProfile);
 
 // --- 🛡️ ADMIN ACTIONS (Organizer Approvals) ---
-// These routes require both login (isAuthenticated) AND admin privileges (isAdmin)
 router.get("/admin/organizers/pending", isAuthenticated, isAdmin, getPendingOrganizers);
 router.put("/admin/organizers/:id/approve", isAuthenticated, isAdmin, approveOrganizer);
 router.delete("/admin/organizers/:id/reject", isAuthenticated, isAdmin, rejectOrganizer);
@@ -70,7 +65,7 @@ router.get(
     // 3. Safely encode the user object into a URL string
     const encodedUser = encodeURIComponent(JSON.stringify(userData));
 
-    // 4. Bounce the user back to the React app dynamically using CLIENT_URL
+    // 4. Bounce the user straight to your Vercel site!
     res.redirect(`${CLIENT_URL}/oauth-success?token=${token}&user=${encodedUser}`);
   }
 );
