@@ -20,8 +20,8 @@ import EventAttendees from "./pages/EventAttendees";
 import EditEvent from "./pages/EditEvent";
 import Profile from "./pages/Profile";
 import OAuthSuccess from "./pages/OAuthSuccess";
-//import ForgotPassword from "./pages/ForgotPassword"; // 🚀 NEW IMPORT
-//import ResetPassword from "./pages/ResetPassword";   // 🚀 NEW IMPORT
+import ForgotPassword from "./pages/ForgotPassword"; // 🚀 NEW IMPORT
+import ResetPassword from "./pages/ResetPassword";   // 🚀 NEW IMPORT
 
 function App() {
   return (
